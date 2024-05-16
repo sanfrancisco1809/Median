@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics Visualization: Median</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            text-align: center;
+            background-color: blanchedalmond;
+        }
+
+        #explanationContainer,
+        #animationContainer,
+        #formulaContainer,
+        #resultContainer {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .button {
+            font-size: 20px;
+            padding: 10px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        .number {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px;
+            background-color: lightgrey;
+            border-radius: 5px;
+            transition: transform 2s, background-color 0.5s ease-in-out;
+        }
+
+        .highlight {
+            background-color: yellow;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="module">
+        import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
+        Chatbot.init({
+            chatflowid: "fb607404-f68a-448e-973f-b43201e09c56",
+            apiHost: "http://localhost:3000",
+            theme: {
+                button: {
+                    backgroundColor: "#DBA979",
+                    chatWindow: {
+                        height: 700,
+                        width: 400,
+                        userMessage: {
+                            backgroundColor: "#DBA979",
+                        },
+                        textInput: {
+                            sendButtonColor: "#DBA979",
+                        }
+                    }
+                }
+            }
+        })
+    </script>
+
+    <div id="explanationContainer"></div>
+    <div id="animationContainer"></div>
+    <div id="formulaContainer"></div>
+    <div id="resultContainer"></div>
+    <button id="startButton">Start Median Animation</button>
+    <div id="linksContainer" class="hidden">
+        <a href="file:///C:/Users/sanfr/OneDrive/Desktop/MMM_animation/Version%2022/index.html">Mean
+            Visualization</a> |
+        <a href="file:///C:/Users/sanfr/OneDrive/Desktop/MMM_animation/Version%2022/Mode/index.html">Mode
+            Visualization</a>
+        <a href="file:///C:/Users/sanfr/OneDrive/Desktop/MMM_animation/Version%2022/Exercise_MMM/Index.html">Mean-Median-Mode
+            Exercise</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('startButton').addEventListener('click', startMedianAnimation);
+            
+        });
+
+        function generateRandomDataset(size) {
+            let numbers = [];
+            for (let i = 0; i < size; i++) {
+                numbers.push(Math.floor(Math.random() * 100) + 1); // Generate numbers between 1 and 100
+            }
+            return numbers;
+        }
+
+        function startMedianAnimation() {
+            document.getElementById('linksContainer').classList.add('hidden');
+            const dataSet = generateRandomDataset(10); // Generate a random dataset each time
+            const startButton = document.getElementById('startButton');
+            startButton.style.display = 'none'; // Hide start button
+
+            const animationContainer = document.getElementById('animationContainer');
+            const explanationContainer = document.getElementById('explanationContainer');
+            const formulaContainer = document.getElementById('formulaContainer');
+            const resultContainer = document.getElementById('resultContainer');
+
+            animationContainer.innerHTML = ''; // Clear previous content
+            formulaContainer.innerHTML = ''; // Clear previous content
+            explanationContainer.innerHTML = 'Displaying numbers one by one...';
+            resultContainer.innerHTML = ''; // Clear result content
+
+            displayNumbersSequentially(dataSet.slice(), 0); // Use a slice to clone the array
+        }
+
+        function displayNumbersSequentially(dataSet, index) {
+            const animationContainer = document.getElementById('animationContainer');
+
+            if (index < dataSet.length) {
+                const numberElement = document.createElement('div');
+                numberElement.classList.add('number');
+                numberElement.textContent = dataSet[index];
+                animationContainer.appendChild(numberElement);
+
+                // Highlight the current number and then fade
+                setTimeout(() => {
+                    numberElement.classList.add('highlight');
+                    setTimeout(() => {
+                        numberElement.classList.remove('highlight');
+                        displayNumbersSequentially(dataSet, index + 1);
+                    }, 500); // Wait before removing highlight and moving to the next number
+                }, 500 * index); // Sequential display
+            } else {
+                // Once all numbers are displayed, proceed to sort them
+                setTimeout(() => {
+                    explanationContainer.innerHTML = 'Sorting numbers in ascending order...';
+                    sortNumbers([...dataSet]); // Pass a cloned array for sorting
+                }, 500 * (index + 1));
+            }
+        }
+
+        function sortNumbers(dataSet) {
+            const animationContainer = document.getElementById('animationContainer');
+            const numberElements = animationContainer.getElementsByClassName('number');
+
+            // Apply bubble sort for visualization, swapping DOM elements to reflect sorted order
+            let len = dataSet.length;
+            for (let i = 0; i < len; i++) {
+                setTimeout(() => {
+                    for (let j = 0; j < len - i - 1; j++) {
+                        if (dataSet[j] > dataSet[j + 1]) {
+                            // Swap values in array
+                            [dataSet[j], dataSet[j + 1]] = [dataSet[j + 1], dataSet[j]];
+                            // Swap DOM elements
+                            animationContainer.insertBefore(numberElements[j + 1], numberElements[j]);
+                        }
+                    }
+                    if (i === len - 1) {
+                        // Highlight median after sorting is complete
+                        setTimeout(highlightMedian, 2000, dataSet);
+                    }
+                }, 1000 * i);
+            }
+        }
+
+        function highlightMedian(sortedData) {
+            const explanationContainer = document.getElementById('explanationContainer');
+            const formulaContainer = document.getElementById('formulaContainer');
+            const resultContainer = document.getElementById('resultContainer');
+            const numberElements = document.querySelectorAll('.number');
+
+            let median;
+            if (sortedData.length % 2 === 0) {
+                const mid1 = sortedData.length / 2 - 1;
+                const mid2 = sortedData.length / 2;
+                const num_sum = (sortedData[mid1] + sortedData[mid2])
+                median = (sortedData[mid1] + sortedData[mid2]) / 2;
+                numberElements[mid1].classList.add('highlight');
+                numberElements[mid2].classList.add('highlight');
+                setTimeout(() => {
+                    explanationContainer.innerHTML = 'Median is the average of the two middle numbers, Since the number of data points in the dataset is an even number';
+                    formulaContainer, innerHTML = '';
+                    formulaContainer.innerHTML += ` 
+                            <div style="display: flex; align-items: center; margin-top: 20px;">
+                                <span style="margin-right: 10px;">Median = </span>
+                                <div class="fraction" style="display: flex; flex-direction: column; align-items: center;">
+                                    <span class="numerator">"Average of the two middle numbers"</span>
+                                    <hr style="width: 100%;">
+                                    <span class="denominator">2</span>
+                                </div>
+                            </div>`;
+                }, 5000);
+                setTimeout(() => {
+                    formulaContainer, innerHTML = '';
+                    formulaContainer.innerHTML += ` 
+                            <div style="display: flex; align-items: center; margin-top: 20px;">
+                                <span style="margin-right: 10px;">Median = </span>
+                                <div class="fraction" style="display: flex; flex-direction: column; align-items: center;">
+                                    <span class="numerator">${sortedData[mid1]} + ${sortedData[mid2]}</span>
+                                    <hr style="width: 100%;">
+                                    <span class="denominator">2</span>
+                                </div>
+                            </div>`;
+                }, 10000);
+                setTimeout(() => {
+                    formulaContainer, innerHTML = '';
+                    formulaContainer.innerHTML += ` 
+                            <div style="display: flex; align-items: center; margin-top: 20px;">
+                                <span style="margin-right: 10px;">Median = </span>
+                                <div class="fraction" style="display: flex; flex-direction: column; align-items: center;">
+                                    <span class="numerator">${num_sum}</span>
+                                    <hr style="width: 100%;">
+                                    <span class="denominator">2</span>
+                                </div>
+                            </div>`;
+                }, 15000);
+            } else {
+                const mid = Math.floor(sortedData.length / 2);
+                median = sortedData[mid];
+                numberElements[mid].classList.add('highlight');
+                setTimeout(() => {
+                    explanationContainer.innerHTML = 'Median is the middle number.';
+                    formulaContainer, innerHTML = '';
+                    formulaContainer.innerHTML += ` 
+                            <div style="display: flex; align-items: center; margin-top: 20px;">
+                                <span style="margin-right: 10px;">Median = </span>
+                                <div class="fraction" style="display: flex; flex-direction: column; align-items: center;">
+                                    <span class="numerator">"The middle number"</span>
+                                    <hr style="width: 100%;">
+                                    <span class="denominator">2</span>
+                                </div>
+                            </div>`;
+                }, 5000);
+                setTimeout(() => {
+                    formulaContainer, innerHTML = '';
+                    formulaContainer.innerHTML += ` 
+                            <div style="display: flex; align-items: center; margin-top: 20px;">
+                                <span style="margin-right: 10px;">Median = </span>
+                                <div class="fraction" style="display: flex; flex-direction: column; align-items: center;">
+                                    <span class="numerator">${sortedData[mid]}</span>
+                                    <hr style="width: 100%;">
+                                    <span class="denominator">2</span>
+                                </div>
+                            </div>`;
+                }, 10000);
+            }
+            setTimeout(() => {
+                resultContainer.innerHTML = `Median: ${median}</br></br>`;
+            }, 20000);
+            setTimeout(() => {
+                document.getElementById('startButton').style.display = 'block'; // Show start button for new rounds
+                document.getElementById('startButton').style.marginBottom = '2em'; // Leave double line space for new rounds
+            }, 25000);
+            setTimeout(() => {
+                document.getElementById('linksContainer').classList.remove('hidden');
+            }, 30000);
+        }
+    </script>
+</body>
+
+</html>
